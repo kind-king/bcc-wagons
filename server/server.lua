@@ -222,28 +222,61 @@ Core.Callback.Register('bcc-wagons:SaveWagonTrade', function(source, cb, serverI
 end)
 
 RegisterServerEvent('bcc-wagons:RegisterInventory', function(id, wagonModel)
+    local idStr = 'wagon_' .. tostring(id)
     local src = source
     local user = Core.getUser(src)
     if not user then return end
-    local isRegistered = exports.vorp_inventory:isCustomInventoryRegistered('wagon_' .. tostring(id))
-    if isRegistered then return end
+    local isRegistered = exports.vorp_inventory:isCustomInventoryRegistered(idStr)
 
     for _, wagonModels in pairs(Wagons) do
         for model, wagonConfig in pairs(wagonModels.types) do
             if model == wagonModel then
                 local data = {
-                    id = 'wagon_' .. tostring(id),
+                    id = idStr,
                     name = _U('wagonInv'),
                     limit = tonumber(wagonConfig.inventory.limit),
                     acceptWeapons = wagonConfig.inventory.weapons,
                     shared = wagonConfig.inventory.shared,
-                    ignoreItemStackLimit = true,
-                    whitelistItems = false,
-                    UsePermissions = false,
-                    UseBlackList = false,
-                    whitelistWeapons = false
+                    ignoreItemStackLimit = wagonConfig.inventory.ignoreItemStackLimit or true,
+                    whitelistItems = wagonConfig.inventory.useWhiteList or false,
+                    UsePermissions = wagonConfig.inventory.usePermissions or false,
+                    UseBlackList = wagonConfig.inventory.useBlackList or false,
+                    whitelistWeapons = wagonConfig.inventory.whitelistWeapons or false,
                 }
-                exports.vorp_inventory:registerInventory(data)
+
+                if isRegistered then
+                    exports.vorp_inventory:updateCustomInventoryData(idStr, data)
+                else
+                    exports.vorp_inventory:registerInventory(data)
+                end
+
+                if data.UsePermissions then
+                    for _, permission in ipairs(wagonConfig.inventory.permissions.allowedJobsTakeFrom) do
+                        exports.vorp_inventory:AddPermissionTakeFromCustom(idStr, permission.name, permission.grade)
+                    end
+                    for _, permission in ipairs(wagonConfig.inventory.permissions.allowedJobsMoveTo) do
+                        exports.vorp_inventory:AddPermissionMoveToCustom(idStr, permission.name, permission.grade)
+                    end
+                end
+
+                if data.whitelistItems then
+                    for _, item in ipairs(wagonConfig.inventory.itemsLimitWhiteList) do
+                        exports.vorp_inventory:setCustomInventoryItemLimit(idStr, item.name, item.limit)
+                    end
+                end
+
+                if data.whitelistWeapons then
+                    for _, weapon in ipairs(wagonConfig.inventory.weaponsLimitWhiteList) do
+                        exports.vorp_inventory:setCustomInventoryWeaponLimit(idStr, weapon.name, weapon.limit)
+                    end
+                end
+
+                if data.UseBlackList then
+                    for _, item in ipairs(wagonConfig.inventory.itemsBlackList) do
+                        exports.vorp_inventory:BlackListCustomAny(idStr, item)
+                    end
+                end
+                break
             end
         end
     end
