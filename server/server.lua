@@ -93,7 +93,7 @@ Core.Callback.Register('bcc-wagons:UpdateWagonName', function(source, cb, wagonI
     cb(true)
 end)
 
-RegisterServerEvent('bcc-wagons:SelectWagon', function(data)
+RegisterNetEvent('bcc-wagons:SelectWagon', function(data)
     local src = source
     local user = Core.getUser(src)
     if not user then return end
@@ -221,7 +221,7 @@ Core.Callback.Register('bcc-wagons:SaveWagonTrade', function(source, cb, serverI
     cb(true)
 end)
 
-RegisterServerEvent('bcc-wagons:RegisterInventory', function(id, wagonModel)
+RegisterNetEvent('bcc-wagons:RegisterInventory', function(id, wagonModel)
     local idStr = 'wagon_' .. tostring(id)
     local src = source
     local user = Core.getUser(src)
@@ -282,7 +282,7 @@ RegisterServerEvent('bcc-wagons:RegisterInventory', function(id, wagonModel)
     end
 end)
 
-RegisterServerEvent('bcc-wagons:OpenInventory', function(id)
+RegisterNetEvent('bcc-wagons:OpenInventory', function(id)
     local src = source
     local user = Core.getUser(src)
     if not user then return end
@@ -414,15 +414,14 @@ end)
 
 if Config.outfitsAtWagon then
 
-    RegisterNetEvent('bcc-wagons:GetOutfits')
-    AddEventHandler('bcc-wagons:GetOutfits', function()
+    RegisterNetEvent('bcc-wagons:GetOutfits', function()
         local src = source
-        local user = Core.getUser(source)
+        local user = Core.getUser(src)
         if not user then return end
         local character = user.getUsedCharacter
         local identifier = character.identifier
         local charIdentifier = character.charIdentifier
-    
+
         exports.oxmysql:execute("SELECT * FROM outfits WHERE `identifier` = ? AND `charidentifier` = ?", { identifier, charIdentifier }, function(result)
             if result[1] then
                 TriggerClientEvent('bcc-wagons:LoadOutfits', src, { comps = character.comps, compTints = character.compTints }, result)
@@ -430,16 +429,15 @@ if Config.outfitsAtWagon then
         end)
     end)
 
-    RegisterNetEvent('bcc-wagons:setOutfit')
-    AddEventHandler('bcc-wagons:setOutfit', function(Outfit, CacheComps)
+    RegisterNetEvent('bcc-wagons:setOutfit', function(Outfit, CacheComps)
         local src = source
-        local user = Core.getUser(source)
+        local user = Core.getUser(src)
         if not user then return end
         local character = user.getUsedCharacter
             if CacheComps then
                 user.updateComps(json.encode(CacheComps))
             end
-    
+
             if Outfit then
                 user.updateSkin(json.encode(Outfit))
             end
